@@ -271,29 +271,29 @@ RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 {% endif %}
 
 
-RUN {{ macros.install_packages(base_centos_yum_repo_packages | customizable("centos_yum_repo_packages"), chain=True, clean=False) }} \
+RUN {{ macros.install_packages(base_centos_yum_repo_packages | customizable("centos_yum_repo_packages"), chain=True, clean=False) }}
 {%- for repo in base_centos_yum_repos_to_enable | customizable('centos_yum_repos_to_enable') %}
 {%- if distro_package_manager == 'dnf' %}
-    && sed -i -e 's/^mirrorlist/#mirrorlist/g' \
+RUN sed -i -e 's/^mirrorlist/#mirrorlist/g' \
        -e 's/^#baseurl/baseurl/g' \
-       -e 's/mirror\.centos\.org/vault.centos.org/g' /etc/yum.repos.d/CentOS-*.repo \
-    && dnf config-manager --enable {{ repo }} \
+       -e 's/mirror\.centos\.org/vault.centos.org/g' /etc/yum.repos.d/*.repo
+RUN dnf config-manager --enable {{ repo }}
 {% else %}
-    && yum-config-manager --enable {{ repo }} \
+RUN yum-config-manager --enable {{ repo }}
 {% endif -%}
 {% endfor -%}
 {%- for repo in base_centos_yum_repos_to_disable | customizable('centos_yum_repos_to_disable') %}
 {%- if distro_package_manager == 'dnf' %}
-    && dnf config-manager --disable {{ repo }} \
+RUN dnf config-manager --disable {{ repo }}
 {%- else %}
-    && yum-config-manager --disable {{ repo }} \
+RUN yum-config-manager --disable {{ repo }}
 {%- endif -%}
 {%- endfor %}
 {% for key in base_centos_yum_repo_keys | customizable('centos_yum_repo_keys') -%}
-    && rpm --import {{ key }} \
+RUN rpm --import {{ key }}
 {% endfor -%}
 {% block base_centos_repo_overrides_post_yum -%}{% endblock -%}
-    && {{ macros.rpm_security_update(clean_package_cache) }}
+RUN {{ macros.rpm_security_update(clean_package_cache) }}
 
     {%- endif %}
     {# Endif for base_distro centos #}
